@@ -121,9 +121,9 @@ function App() {
             <option disabled selected value="default">
               Select task status
             </option>
-            <option value="toDo">To Do</option>
-            <option value="inProgress">In Progress</option>
-            <option value="done">Done</option>
+            <option value="To Do">To Do</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Done">Done</option>
           </select>
           <button className="btn btn-primary">Add Task</button>
         </div>
@@ -134,6 +134,7 @@ function App() {
             key={task._id}
             task={task}
             handleDelete={handleDelete}
+            fetchData={fetchData}
           ></TaskCard>
         ))}
       </div>

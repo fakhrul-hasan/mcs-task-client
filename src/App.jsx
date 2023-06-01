@@ -1,15 +1,111 @@
-import { useState } from 'react'
-import Button from 'react-bootstrap/Button';
-import './App.css'
-import 'bootstrap/dist/css/bootstrap.min.css';
+import Swal from "sweetalert2";
+import "./App.css";
+import { set, useForm } from "react-hook-form";
+import { useEffect, useState } from "react";
+import TaskCard from "./components/TaskCard";
 
 function App() {
-
+  const [tasks, setTasks] = useState();
+  const [loading, setLoading] = useState(true);
+  useEffect(()=>{
+    fetch('http://localhost:5000/tasks')
+    .then(res=>res.json())
+    .then(data=>{
+      setTasks(data);
+      setLoading(false);
+    })
+  },[])
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset
+  } = useForm();
+  const onSubmit = (data) => {
+    fetch("http://localhost:5000/tasks", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(data),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.insertedId) {
+          reset();
+          Swal.fire({
+            position: "top-end",
+            icon: "success",
+            title: "Your task added successfully",
+            showConfirmButton: false,
+            timer: 1500,
+          });
+        }
+      });
+  };
+  if(loading){
+    return(
+      <div className="text-center">
+        <span className="loading loading-infinity loading-lg"></span>
+      </div>
+    )
+  }
   return (
     <>
-      <Button>Use</Button>
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="card flex-shrink-0 w-full shadow-2xl bg-base-100"
+      >
+        <div className="card-body flex flex-row">
+          <label className="label max-w-sm">
+            <span className="label-text">Title</span>
+          </label>
+          <span className="flex flex-col">
+            <input
+              type="text"
+              placeholder="title"
+              className="input input-bordered max-w-sm"
+              {...register("title", { required: true })}
+            />
+            {errors.titleRequired && (
+              <span className="text-red-600">Title is required</span>
+            )}
+          </span>
+          <label className="label max-w-sm">
+            <span className="label-text">Description</span>
+          </label>
+          <span className="flex flex-col">
+          <input
+            type="text"
+            placeholder="description"
+            className="input input-bordered flex-grow"
+            {...register("description", { required: true })}
+          />
+          {errors.desRequired && (
+              <span className="text-red-600">Description is required</span>
+            )}
+          </span>
+          <select
+            {...register("status")}
+            className="select select-primary w-full max-w-xs"
+          >
+            <option disabled selected value="default">
+              Select task status
+            </option>
+            <option value="toDo">To Do</option>
+            <option value="inProgress">In Progress</option>
+            <option value="done">Done</option>
+          </select>
+          <button className="btn btn-primary">Add Task</button>
+        </div>
+      </form>
+      <div className="">
+        {
+          tasks.map(task=><TaskCard key={task._id} task={task}></TaskCard>)
+        }
+      </div>
     </>
-  )
+  );
 }
 
-export default App
+export default App;

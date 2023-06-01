@@ -3,23 +3,51 @@ import "./App.css";
 import { set, useForm } from "react-hook-form";
 import { useEffect, useState } from "react";
 import TaskCard from "./components/TaskCard";
+import { data } from "autoprefixer";
 
 function App() {
   const [tasks, setTasks] = useState();
   const [loading, setLoading] = useState(true);
-  useEffect(()=>{
-    fetch('http://localhost:5000/tasks')
-    .then(res=>res.json())
-    .then(data=>{
-      setTasks(data);
-      setLoading(false);
-    })
-  },[])
+  useEffect(() => {
+    fetchData();
+  }, []);
+  const fetchData = () => {
+    fetch("http://localhost:5000/tasks")
+      .then((res) => res.json())
+      .then((data) => {
+        setTasks(data);
+        setLoading(false);
+      });
+  };
+  const handleDelete = (id) => {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        fetch(`http://localhost:5000/tasks/${id}`, {
+          method: "DELETE",
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.deletedCount > 0) {
+              fetchData();
+              Swal.fire("Deleted!", "Your file has been deleted.", "success");
+            }
+          });
+      }
+    });
+  };
   const {
     register,
     handleSubmit,
     formState: { errors },
-    reset
+    reset,
   } = useForm();
   const onSubmit = (data) => {
     fetch("http://localhost:5000/tasks", {
@@ -33,6 +61,7 @@ function App() {
       .then((data) => {
         if (data.insertedId) {
           reset();
+          fetchData();
           Swal.fire({
             position: "top-end",
             icon: "success",
@@ -43,12 +72,12 @@ function App() {
         }
       });
   };
-  if(loading){
-    return(
+  if (loading) {
+    return (
       <div className="text-center">
         <span className="loading loading-infinity loading-lg"></span>
       </div>
-    )
+    );
   }
   return (
     <>
@@ -75,13 +104,13 @@ function App() {
             <span className="label-text">Description</span>
           </label>
           <span className="flex flex-col">
-          <input
-            type="text"
-            placeholder="description"
-            className="input input-bordered flex-grow"
-            {...register("description", { required: true })}
-          />
-          {errors.desRequired && (
+            <input
+              type="text"
+              placeholder="description"
+              className="input input-bordered flex-grow"
+              {...register("description", { required: true })}
+            />
+            {errors.desRequired && (
               <span className="text-red-600">Description is required</span>
             )}
           </span>
@@ -99,10 +128,14 @@ function App() {
           <button className="btn btn-primary">Add Task</button>
         </div>
       </form>
-      <div className="">
-        {
-          tasks.map(task=><TaskCard key={task._id} task={task}></TaskCard>)
-        }
+      <div className="grid grid-cols-3 gap-4 p-4">
+        {tasks.map((task) => (
+          <TaskCard
+            key={task._id}
+            task={task}
+            handleDelete={handleDelete}
+          ></TaskCard>
+        ))}
       </div>
     </>
   );
